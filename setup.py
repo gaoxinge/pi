@@ -8,9 +8,15 @@ rational = Extension(
     depends=["pi/rational/rational.h"],
 )
 
+quaternion = Extension(
+    name="pi.quaternion",
+    sources=["pi/quaternion/quaternion.c"],
+    depends=["pi/quaternion/quaternion.h"],
+)
+
 setup(
     name="pi", 
     version="1.0.0",
     packages=["pi"],
-    ext_modules=[rational],
+    ext_modules=[rational, quaternion],
 )
