@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 from pi import rational
-
 
 # test rational
 r = rational(1, 2)
