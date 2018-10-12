@@ -15,9 +15,9 @@ PyTypeObject PyRational_Type;
 #define PyRational_Check(op)      PyObject_TypeCheck(op, &PyRational_Type)
 #define PyRational_CheckExact(op) (Py_TYPE(op) == &PyRational_Type)
 
-PyObject *PyRational_FromDoubles  (double num, double den);
-double   *PyRational_NumAsDoubles (PyObject *op);
-double   *PyRational_DenAsDoubles (PyObject *op);
+PyObject *PyRational_FromDoubles (double num, double den);
+double    PyRational_NumAsDouble (PyObject *op);
+double    PyRational_DenAsDouble (PyObject *op);
 
 #ifdef __cplusplus
 }

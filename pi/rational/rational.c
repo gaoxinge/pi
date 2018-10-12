@@ -239,7 +239,7 @@ static PyNumberMethods rational_as_number = {
 
 static PyMemberDef rational_members[] = {
     {"num", T_DOUBLE, offsetof(PyRationalObject, num), READONLY, 
-     "the num part of rational numbeer"},
+     "the num part of rational number"},
     {"den", T_DOUBLE, offsetof(PyRationalObject, den), READONLY,
      "the den part of rational number"},
     {NULL},
