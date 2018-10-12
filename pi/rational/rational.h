@@ -1,5 +1,3 @@
-/* Rational number structure */
-
 #ifndef Py_RATIONAL_H
 #define Py_RATIONAL_H
 #ifdef __cplusplus
@@ -8,8 +6,8 @@ extern "C" {
 
 typedef struct {
     PyObject_HEAD
-    double a;
-    double b;
+    double num;
+    double den;
 } PyRationalObject;
 
 PyTypeObject PyRational_Type;
