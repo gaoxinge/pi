@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pi import rational
 from pi import quaternion
+from pi import stack
 
 # test rational
 r = rational(1, 2)
@@ -47,3 +48,17 @@ print -q1
 print +q1
 print abs(q1)
 print q1.__nonzero__()
+
+# test stack
+s = stack()
+s.push(123)
+s.push("123")
+s.push([1, 2, 3])
+s.push(123)
+print len(s), s
+print s.pop()
+print len(s), s
+print repr(s)
+print str(s)
+for i in s:
+    print i
