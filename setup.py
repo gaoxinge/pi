@@ -14,9 +14,15 @@ quaternion = Extension(
     depends=["pi/quaternion/quaternion.h"],
 )
 
+stack = Extension(
+    name="pi.stack",
+    sources=["pi/stack/stack.c"],
+    depends=["pi/stack/stack.h"],
+)
+
 setup(
     name="pi", 
     version="1.0.0",
     packages=["pi"],
-    ext_modules=[rational, quaternion],
+    ext_modules=[rational, quaternion, stack],
 )
