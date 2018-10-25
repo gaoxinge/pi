@@ -1,34 +1,51 @@
 #include "Python.h"
 #include "structmember.h"
-#include "stack.h"
+#include "queue.h"
 
 PyObject *
-PyStack_New() {
-    PyStackObject *v = PyObject_GC_New(PyStackObject, &PyStack_Type);
+PyQueue_New() {
+    PyQueueObject *v = PyObject_GC_New(PyQueueObject, &PyQueue_Type);
     if (v == NULL)
         return NULL;
     v->root = NULL;
+    v->tail = NULL;
     v->ob_size = 0;
     return (PyObject *) v;
 }
 
 void 
-PyStack_Push(PyStackObject *v, PyObject *ob) {
-    Elem *tmp = PyMem_MALLOC(sizeof(Elem));
+PyQueue_Add(PyQueueObject *v, PyObject *ob) {
+    Elems *tmp = PyMem_MALLOC(sizeof(Elems));
     Py_XINCREF(ob);
     tmp->item = ob;
     if (v->root != NULL) Py_XDECREF(v->root->item);
     tmp->next = v->root;
+    tmp->last = NULL;
+    
+    if (v->root != NULL) {
+        v->root->last = tmp;
+        Py_XINCREF(v->root->last->item);
+    }
+    
     v->root = tmp;
     v->ob_size++;
-    Py_XINCREF(v->root->item);  // or Py_XINCREF(tmp->item) strange!!
+    Py_XINCREF(v->root->item);
+    
+    if (v->tail == NULL) {
+        v->tail = tmp;
+        Py_XINCREF(v->tail->item);
+    }
 }
 
 PyObject *
-PyStack_Pop(PyStackObject *v) {
-    Elem *tmp = v->root;
+PyQueue_Delete(PyQueueObject *v) {
+    Elems *tmp = v->tail;
     PyObject *ob = tmp->item;
-    v->root = tmp->next;
+    v->tail = tmp->last;
+    v->tail->next = NULL;
+    if (v->tail == NULL) {
+        v->root = NULL;
+    }
     v->ob_size--;
     Py_XDECREF(ob);
     PyMem_FREE(tmp);
@@ -36,9 +53,9 @@ PyStack_Pop(PyStackObject *v) {
 }
 
 PyObject *
-PyStack_ToList(PyStackObject *v) {
+PyQueue_ToList(PyQueueObject *v) {
     PyObject *l = PyList_New(v->ob_size);
-    Elem *tmp = v->root;
+    Elems *tmp = v->root;
     Py_ssize_t i = v->ob_size - 1;
     while (tmp) {
         PyList_SetItem(l, i, tmp->item);
@@ -50,9 +67,9 @@ PyStack_ToList(PyStackObject *v) {
 }
 
 static void 
-stack_dealloc(PyStackObject *v) {
-    Elem *tmp = v->root;
-    Elem *ttmp;
+queue_dealloc(PyQueueObject *v) {
+    Elems *tmp = v->root;
+    Elems *ttmp;
     while (tmp) {
         ttmp = tmp->next;
         Py_XDECREF(tmp->item);
@@ -63,20 +80,20 @@ stack_dealloc(PyStackObject *v) {
 }
 
 static PyObject *
-stack_repr(PyStackObject *v) {
-    PyObject *l = PyStack_ToList(v);
-    PyObject *s = PyObject_Repr(l);
+queue_repr(PyQueueObject *v) {
+    PyObject *l = PyQueue_ToList(v);
+    PyObject *s = PyObject_Str(l);
     Py_XDECREF(l);
     return s;
 }
 
 static Py_ssize_t
-stack_length(PyStackObject *v) {
+queue_length(PyQueueObject *v) {
     return v->ob_size;
 }
 
-static PySequenceMethods stack_as_sequence = {
-    (lenfunc)stack_length,             /* sq_length */
+static PySequenceMethods queue_as_sequence = {
+    (lenfunc)queue_length,             /* sq_length */
     0,                                 /* sq_concat */
     0,                                 /* sq_repeat */
     0,                                 /* sq_item */
@@ -88,71 +105,71 @@ static PySequenceMethods stack_as_sequence = {
     0,                                 /* sq_inplace_repeat */
 };
 
-static PyMappingMethods stack_as_mapping = {
-    (lenfunc)stack_length,             /* ma_length */
+static PyMappingMethods queue_as_mapping = {
+    (lenfunc)queue_length,             /* ma_length */
     0,                                 /* ma_subscript */
     0,                                 /* ma_ass_subscript */
 };
 
 static PyObject *
-stack_str(PyStackObject *v) {
-    PyObject *l = PyStack_ToList(v);
+queue_str(PyQueueObject *v) {
+    PyObject *l = PyQueue_ToList(v);
     PyObject *s = PyObject_Str(l);
     Py_XDECREF(l);
     return s;
 }
 
 static PyObject *
-stack_iter(PyStackObject *v) {
-    PyObject *l = PyStack_ToList(v);
+queue_iter(PyQueueObject *v) {
+    PyObject *l = PyQueue_ToList(v);
     PyObject *i = (&PyList_Type)->tp_iter(l);
     Py_XDECREF(l);
     return i;
 }
 
-static PyMethodDef stack_methods[] = {
-    {"push", (PyCFunction)PyStack_Push, METH_O,
-     "stack.push(x)"},
-    {"pop", (PyCFunction)PyStack_Pop, METH_NOARGS,
-     "stack.pop() -> x"},
+static PyMethodDef queue_methods[] = {
+    {"add", (PyCFunction)PyQueue_Add, METH_O,
+     "queue.add(x)"},
+    {"delete", (PyCFunction)PyQueue_Delete, METH_NOARGS,
+     "queue.delete() -> x"},
     {NULL},
 };
 
 static PyObject *
-stack_new(PyTypeObject *type, PyObject *args, PyObject *kw) {
-    return PyStack_New();
+queue_new(PyTypeObject *type, PyObject *args, PyObject *kw) {
+    return PyQueue_New();
 }
 
-PyTypeObject PyStack_Type = {
+PyTypeObject PyQueue_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "stack",
-    sizeof(PyStackObject),
+    "queue",
+    sizeof(PyQueueObject),
     0,
-    (destructor)stack_dealloc,                          /* tp_dealloc */
+    (destructor)queue_dealloc,                          /* tp_dealloc */
     0,                                                  /* tp_print */
     0,                                                  /* tp_getattr */
     0,                                                  /* tp_setattr */
     0,                                                  /* tp_compare */
-    (reprfunc)stack_repr,                               /* tp_repr */
+    (reprfunc)queue_repr,                               /* tp_repr */
     0,                                                  /* tp_as_number */
-    &stack_as_sequence,                                 /* tp_as_sequence */
-    &stack_as_mapping,                                  /* tp_as_mapping */
+    &queue_as_sequence,                                 /* tp_as_sequence */
+    &queue_as_mapping,                                  /* tp_as_mapping */
     (hashfunc)PyObject_HashNotImplemented,              /* tp_hash */
     0,                                                  /* tp_call */
-    (reprfunc)stack_str,                                /* tp_str */
+    (reprfunc)queue_str,                                /* tp_str */
     PyObject_GenericGetAttr,                            /* tp_getattro */
     0,                                                  /* tp_setattro */
     0,                                                  /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_CHECKTYPES |
     Py_TPFLAGS_BASETYPE,                                /* tp_flags */
-    "stack() -> new empty stack\n",                     /* tp_doc */
+    "queue() -> new empty queue\n",                     /* tp_doc */
     0,                                                  /* tp_traverse */
     0,                                                  /* tp_clear */
     0,                                                  /* tp_richcompare */
     0,                                                  /* tp_weaklistoffset */
-    (getiterfunc)stack_iter,                            /* tp_iter */
+    (getiterfunc)queue_iter,                            /* tp_iter */
     0,                                                  /* tp_iternext */
-    stack_methods,                                      /* tp_methods */
+    queue_methods,                                      /* tp_methods */
     0,                                                  /* tp_members */
     0,                                                  /* tp_getset */
     0,                                                  /* tp_base */
@@ -162,24 +179,24 @@ PyTypeObject PyStack_Type = {
     0,                                                  /* tp_dictoffset */
     0,                                                  /* tp_init */
     PyType_GenericAlloc,                                /* tp_alloc */
-    stack_new,                                          /* tp_new */
+    queue_new,                                          /* tp_new */
     PyObject_GC_Del,                                    /* tp_free */
 };
 
-static PyMethodDef StackMethods[] = {
+static PyMethodDef QueueMethods[] = {
     {NULL},
 };
 
 void 
-initstack()
+initqueue()
 {
     PyObject* m = NULL;
-    m = Py_InitModule("stack", StackMethods);
+    m = Py_InitModule("queue", QueueMethods);
     if (m == NULL)
         return;
     
-    if (PyType_Ready(&PyStack_Type) < 0)
+    if (PyType_Ready(&PyQueue_Type) < 0)
         return;
-    Py_INCREF(&PyStack_Type);
-    PyModule_AddObject(m, "stack", (PyObject *) &PyStack_Type);
+    Py_INCREF(&PyQueue_Type);
+    PyModule_AddObject(m, "queue", (PyObject *) &PyQueue_Type);
 }
