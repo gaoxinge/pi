@@ -20,9 +20,16 @@ stack = Extension(
     depends=["pi/stack/stack.h"],
 )
 
+queue = Extension(
+    name="pi.queue",
+    sources=["pi/queue/queue.c"],
+    depends=["pi/queue/queue.h"],
+)
+
+
 setup(
     name="pi", 
     version="1.0.0",
     packages=["pi"],
-    ext_modules=[rational, quaternion, stack],
+    ext_modules=[rational, quaternion, stack, queue],
 )
