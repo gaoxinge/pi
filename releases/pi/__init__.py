@@ -2,3 +2,4 @@
 from rational import rational
 from quaternion import quaternion
 from stack import stack
+from queue import queue

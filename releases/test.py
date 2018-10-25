@@ -2,6 +2,7 @@
 from pi import rational
 from pi import quaternion
 from pi import stack
+from pi import queue
 
 # test rational
 r = rational(1, 2)
@@ -61,4 +62,18 @@ print len(s), s
 print repr(s)
 print str(s)
 for i in s:
+    print i
+
+# test queue
+q = queue()
+q.add(123)
+q.add("123")
+q.add([1, 2, 3])
+q.add(123)
+print len(q), q
+print q.delete()
+print len(q), q
+print repr(q)
+print str(q)
+for i in q:
     print i
